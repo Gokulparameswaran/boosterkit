@@ -1,38 +1,61 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask import Flask, request
+from fpdf import FPDF
 import smtplib
 from email.message import EmailMessage
-import base64
 
 app = Flask(__name__)
-CORS(app)
 
-@app.route('/send-pdf', methods=['POST'])
-def send_pdf():
+# Route to handle form data from frontend
+@app.route('/submit', methods=['POST'])
+def submit():
     data = request.get_json()
-    pdf_base64 = data['pdf']
-    email_to = data['email']
+    print("Received data:", data)
 
-    # Decode the PDF
-    pdf_data = base64.b64decode(pdf_base64.split(',')[1])
+    name = data['name']
+    email = data['email']
+    phone = data['phone']
+    business = data['business']
 
-    # Prepare email
-    msg = EmailMessage()
-    msg['Subject'] = 'Your Business Booster Kit'
-    msg['From'] = 'your-email@gmail.com'
-    msg['To'] = email_to
-    msg.set_content('Hello,\n\nHere is your Business Booster Kit report.\n\nBest,\nBooster Team')
+    # Generate PDF
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=14)
+    pdf.cell(200, 10, txt="Business Booster Kit", ln=True, align='C')
+    pdf.ln(10)
+    pdf.cell(200, 10, txt=f"Name: {name}", ln=True)
+    pdf.cell(200, 10, txt=f"Email: {email}", ln=True)
+    pdf.cell(200, 10, txt=f"Phone: {phone}", ln=True)
+    pdf.cell(200, 10, txt=f"Business: {business}", ln=True)
 
-    msg.add_attachment(pdf_data, maintype='application', subtype='pdf', filename='booster-kit.pdf')
+    pdf_path = f"{name.replace(' ', '_')}_booster_kit.pdf"
+    pdf.output(pdf_path)
 
-    # Send email using Gmail SMTP
+    # Email setup
+    sender_email = "your_email@gmail.com"         # ✅ Your Gmail address
+    sender_password = "your_app_password_here"    # ✅ App password (not your Gmail password)
+
     try:
+        msg = EmailMessage()
+        msg['Subject'] = "Your Business Booster Kit"
+        msg['From'] = sender_email
+        msg['To'] = email
+        msg.set_content("Attached is your Business Booster Kit.")
+
+        with open(pdf_path, 'rb') as f:
+            file_data = f.read()
+            msg.add_attachment(file_data, maintype='application', subtype='pdf', filename=pdf_path)
+
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
             smtp.login('balamanibalamani452@gmail.com', 'nnrpmjczkhimirtg')
             smtp.send_message(msg)
-        return jsonify({'status': 'sent'})
+
+        print("Email sent successfully to", email)
+        return "Booster Kit sent successfully!"
+
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        print("Failed to send email:", e)
+        return "Failed to send email.", 500
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

@@ -49,57 +49,29 @@
   </div>
 
   <script>
-  const form = document.getElementById('boosterForm');
+document.querySelector("form").addEventListener("submit", async function (e) {
+  e.preventDefault();  // Stop page reload / zoom
 
-  form.addEventListener('submit', function (event) {
-    event.preventDefault();
+  const data = {
+    name: document.getElementById("name").value,
+    email: document.getElementById("email").value,
+    phone: document.getElementById("phone").value,
+    business: document.getElementById("business").value
+  };
 
-    const userData = {
-      name: document.getElementById('name').value,
-      business: document.getElementById('business').value,
-      stage: document.getElementById('stage').value,
-      goal: document.getElementById('goal').value,
-      email: document.getElementById('email').value
-    };
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    doc.setFontSize(16);
-    doc.text("Business Booster Kit Report", 20, 20);
-    doc.setFontSize(12);
-    doc.text(`Name: ${userData.name}`, 20, 40);
-    doc.text(`Business: ${userData.business}`, 20, 50);
-    doc.text(`Stage: ${userData.stage}`, 20, 60);
-    doc.text(`Goal: ${userData.goal}`, 20, 70);
-    doc.text(`Email: ${userData.email}`, 20, 80);
-
-    const pdfBlob = doc.output('blob');
-
-    const reader = new FileReader();
-    reader.onloadend = function () {
-      const pdfBase64 = reader.result;
-
-      fetch('http://localhost:5000/send-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pdf: pdfBase64,
-          email: userData.email
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === 'sent') {
-          alert('Email sent successfully!');
-        } else {
-          alert('Failed to send email: ' + data.message);
-        }
-      });
-    };
-    reader.readAsDataURL(pdfBlob);
+  const response = await fetch("http://192.168.94.67:5000/submit", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
   });
+
+  const result = await response.text();
+  alert(result);  // Show confirmation
+});
 </script>
+
 
 
 </body>
