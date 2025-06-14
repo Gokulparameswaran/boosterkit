@@ -5,16 +5,19 @@ from email.message import EmailMessage
 
 app = Flask(__name__)
 
-# Route to handle form data from frontend
+@app.route('/')
+def home():
+    return "Flask app running"
+
 @app.route('/submit', methods=['POST'])
 def submit():
     data = request.get_json()
     print("Received data:", data)
 
-    name = data['name']
-    email = data['email']
-    phone = data['phone']
-    business = data['business']
+    name = data.get('name', 'N/A')
+    email = data.get('email', 'N/A')
+    phone = data.get('phone', 'N/A')
+    business = data.get('business', 'N/A')
 
     # Generate PDF
     pdf = FPDF()
@@ -31,8 +34,8 @@ def submit():
     pdf.output(pdf_path)
 
     # Email setup
-    sender_email = "your_email@gmail.com"         # ✅ Your Gmail address
-    sender_password = "your_app_password_here"    # ✅ App password (not your Gmail password)
+    sender_email = "your_email@gmail.com"          # Your Gmail here
+    sender_password = "your_app_password_here"     # Your Gmail App Password here
 
     try:
         msg = EmailMessage()
@@ -56,6 +59,6 @@ def submit():
         print("Failed to send email:", e)
         return "Failed to send email.", 500
 
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
