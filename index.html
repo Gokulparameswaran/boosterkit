@@ -1,46 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BoosterKit</title>
+  <meta charset="UTF-8">
+  <title>Business Booster Kit</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-<body>
-<h1>
-    om  gan ganapathy namah
-</h1>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
 
-<img width="200px"   src="ganesha.jpg" alt="">
+  <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+    <h1 class="text-2xl font-bold text-center mb-6 text-blue-700">Business Booster Kit</h1>
 
-<table border="2px" cellpadding="15px" >
-<fieldset>
-<legend>Registration form </legend>
-<label >
-    Name
-</label>
-<input type="text">
-<label for="">Password</label>
-<input type="text">
-<label for="">Select course</label>
-<select >
-    <option value="1">C-PROGRAMING</option>
-    <option value="2">C++</option>
-    <option value="3">Java</option>
-</select>
-<br>
-<input type="date">
-<br>
-<textarea cols="30" rows="10">
-</textarea>
-<input type="radio"name="gen">Male
-<input type="radio" name="gen">Female
-<br>
-<input type="checkbox">I agree
-</fieldset>
+    <form id="boosterForm" class="space-y-4">
+      <div>
+        <label for="name" class="block font-medium">Your Name:</label>
+        <input type="text" id="name" class="w-full p-3 border border-gray-300 rounded-lg" required>
+      </div>
 
-<script src="vigneshvar.js" >
-    
+      <div>
+        <label for="business" class="block font-medium">Business Name:</label>
+        <input type="text" id="business" class="w-full p-3 border border-gray-300 rounded-lg" required>
+      </div>
+
+      <div>
+        <label for="stage" class="block font-medium">Business Stage:</label>
+        <select id="stage" class="w-full p-3 border border-gray-300 rounded-lg" required>
+          <option value="">-- Select --</option>
+          <option value="idea">Idea</option>
+          <option value="startup">Startup</option>
+          <option value="growing">Growing</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="goal" class="block font-medium">Your Main Goal:</label>
+        <textarea id="goal" rows="4" class="w-full p-3 border border-gray-300 rounded-lg" required></textarea>
+      </div>
+
+      <div>
+        <label for="email" class="block font-medium">Email to Send Report:</label>
+        <input type="email" id="email" class="w-full p-3 border border-gray-300 rounded-lg" required>
+      </div>
+
+      <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-200">
+        Generate Booster Kit
+      </button>
+    </form>
+  </div>
+
+  <script>
+  const form = document.getElementById('boosterForm');
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    const userData = {
+      name: document.getElementById('name').value,
+      business: document.getElementById('business').value,
+      stage: document.getElementById('stage').value,
+      goal: document.getElementById('goal').value,
+      email: document.getElementById('email').value
+    };
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text("Business Booster Kit Report", 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Name: ${userData.name}`, 20, 40);
+    doc.text(`Business: ${userData.business}`, 20, 50);
+    doc.text(`Stage: ${userData.stage}`, 20, 60);
+    doc.text(`Goal: ${userData.goal}`, 20, 70);
+    doc.text(`Email: ${userData.email}`, 20, 80);
+
+    const pdfBlob = doc.output('blob');
+
+    const reader = new FileReader();
+    reader.onloadend = function () {
+      const pdfBase64 = reader.result;
+
+      fetch('http://localhost:5000/send-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pdf: pdfBase64,
+          email: userData.email
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'sent') {
+          alert('Email sent successfully!');
+        } else {
+          alert('Failed to send email: ' + data.message);
+        }
+      });
+    };
+    reader.readAsDataURL(pdfBlob);
+  });
 </script>
+
 
 </body>
 </html>
